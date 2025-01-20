@@ -12,74 +12,73 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  const supabaseClient = createClient(
+    Deno.env.get('SUPABASE_URL') ?? '',
+    Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+  );
+
   try {
-    const { email, password } = await req.json();
+    // Get the session or user object
+    const authHeader = req.headers.get('Authorization')!;
+    const token = authHeader.replace('Bearer ', '');
+    const { data } = await supabaseClient.auth.getUser(token);
+    const user = data.user;
+    const email = user?.email;
 
-    // Create Supabase admin client
-    const supabaseAdmin = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
-      {
-        auth: {
-          autoRefreshToken: false,
-          persistSession: false,
-        },
-      }
-    );
-
-    // First, check if user exists
-    const { data: existingUser } = await supabaseAdmin.auth.admin.listUsers({
-      filters: {
-        email: email
-      }
-    });
-
-    if (existingUser?.users?.length > 0) {
-      console.log('User already exists:', email);
-      return new Response(
-        JSON.stringify({ 
-          error: "A user with this email address has already been registered",
-          code: "user_exists"
-        }),
-        { 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 400 // Using 400 instead of 500 as this is a client error
-        }
-      );
+    if (!email) {
+      throw new Error('No email found');
     }
-
-    // Create user with subscription_status metadata
-    const { data: userData, error: userError } = await supabaseAdmin.auth.admin.createUser({
-      email,
-      password,
-      user_metadata: {
-        subscription_status: 'pending'
-      }
-    });
-
-    if (userError) throw userError;
 
     const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') || '', {
       apiVersion: '2023-10-16',
     });
 
+    const customers = await stripe.customers.list({
+      email: email,
+      limit: 1
+    });
+
+    let customer_id = undefined;
+    if (customers.data.length > 0) {
+      customer_id = customers.data[0].id;
+      // check if already subscribed to this price
+      const subscriptions = await stripe.subscriptions.list({
+        customer: customers.data[0].id,
+        status: 'active',
+        price: 'price_1QTsN0E4gc3VY6FiyEmpK5eh',
+        limit: 1
+      });
+
+      if (subscriptions.data.length > 0) {
+        return new Response(
+          JSON.stringify({ error: "You are already subscribed" }),
+          { 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 400
+          }
+        );
+      }
+    }
+
+    console.log('Creating payment session...');
     const session = await stripe.checkout.sessions.create({
-      payment_method_types: ['card'],
-      mode: 'subscription',
+      customer: customer_id,
+      customer_email: customer_id ? undefined : email,
       line_items: [
         {
           price: 'price_1QTsN0E4gc3VY6FiyEmpK5eh',
           quantity: 1,
         },
       ],
-      success_url: `${req.headers.get('origin')}/confirmation`,
-      cancel_url: `${req.headers.get('origin')}/signup`,
-      customer_email: email,
+      mode: 'subscription',
+      success_url: `${req.headers.get('origin')}/`,
+      cancel_url: `${req.headers.get('origin')}/confirmation`,
       metadata: {
-        user_id: userData.user.id
+        user_id: user.id
       }
     });
 
+    console.log('Payment session created:', session.id);
     return new Response(
       JSON.stringify({ url: session.url }),
       { 
@@ -88,7 +87,7 @@ serve(async (req) => {
       }
     );
   } catch (error) {
-    console.error('Error:', error);
+    console.error('Error creating payment session:', error);
     return new Response(
       JSON.stringify({ error: error.message }),
       { 
