@@ -19,14 +19,14 @@ const SignupPage = () => {
     setLoading(true);
 
     try {
-      const { data, error } = await supabase.functions.invoke('create-checkout', {
-        body: { email, password }
+      // First, create the user account
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email,
+        password,
       });
 
-      if (error) {
-        // Check if it's a user exists error
-        const errorBody = JSON.parse(error.message);
-        if (errorBody.code === "user_exists") {
+      if (authError) {
+        if (authError.message.includes("already registered")) {
           toast({
             variant: "destructive",
             title: "Account already exists",
@@ -34,6 +34,19 @@ const SignupPage = () => {
           });
           return;
         }
+        throw authError;
+      }
+
+      if (!authData.user) {
+        throw new Error("Failed to create user account");
+      }
+
+      // Now that we have an authenticated user, create the checkout session
+      const { data, error } = await supabase.functions.invoke('create-checkout', {
+        body: { email }
+      });
+
+      if (error) {
         throw error;
       }
 
