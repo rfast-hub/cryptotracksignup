@@ -41,9 +41,19 @@ const SignupPage = () => {
         throw new Error("Failed to create user account");
       }
 
-      // Now that we have an authenticated user, create the checkout session
+      // Get the session after signup
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError || !session) {
+        throw new Error("Failed to get session after signup");
+      }
+
+      // Now create the checkout session with the auth token
       const { data, error } = await supabase.functions.invoke('create-checkout', {
-        body: { email }
+        body: { email },
+        headers: {
+          Authorization: `Bearer ${session.access_token}`
+        }
       });
 
       if (error) {
