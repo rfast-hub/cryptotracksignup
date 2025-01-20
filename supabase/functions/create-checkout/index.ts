@@ -31,7 +31,6 @@ serve(async (req) => {
     const { data: userData, error: userError } = await supabaseAdmin.auth.admin.createUser({
       email,
       password,
-      email_confirm: true,
       user_metadata: {
         subscription_status: 'pending'
       }
