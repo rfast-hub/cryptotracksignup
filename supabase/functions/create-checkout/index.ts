@@ -15,6 +15,30 @@ serve(async (req) => {
   try {
     const { email, password } = await req.json();
 
+    // Create Supabase admin client
+    const supabaseAdmin = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+      {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false,
+        },
+      }
+    );
+
+    // Create user with subscription_status metadata
+    const { data: userData, error: userError } = await supabaseAdmin.auth.admin.createUser({
+      email,
+      password,
+      email_confirm: true,
+      user_metadata: {
+        subscription_status: 'pending'
+      }
+    });
+
+    if (userError) throw userError;
+
     const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') || '', {
       apiVersion: '2023-10-16',
     });
@@ -28,9 +52,12 @@ serve(async (req) => {
           quantity: 1,
         },
       ],
-      success_url: `${req.headers.get('origin')}/confirmation?session_id={CHECKOUT_SESSION_ID}&email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`,
+      success_url: `${req.headers.get('origin')}/confirmation`,
       cancel_url: `${req.headers.get('origin')}/signup`,
       customer_email: email,
+      metadata: {
+        user_id: userData.user.id
+      }
     });
 
     return new Response(
