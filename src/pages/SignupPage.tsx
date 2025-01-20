@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { AuthError } from "@supabase/supabase-js";
 
 const SignupPage = () => {
   const [email, setEmail] = useState("");
@@ -34,6 +35,19 @@ const SignupPage = () => {
           });
           return;
         }
+        
+        // Handle rate limit error
+        if (authError.message.includes("rate_limit")) {
+          const waitTimeMatch = authError.message.match(/after (\d+) seconds/);
+          const waitTime = waitTimeMatch ? waitTimeMatch[1] : "60";
+          toast({
+            variant: "destructive",
+            title: "Please wait",
+            description: `For security purposes, please wait ${waitTime} seconds before trying again.`,
+          });
+          return;
+        }
+        
         throw authError;
       }
 
@@ -76,7 +90,7 @@ const SignupPage = () => {
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to process signup. Please try again.",
+        description: error instanceof AuthError ? error.message : "Failed to process signup. Please try again.",
       });
     } finally {
       setLoading(false);
