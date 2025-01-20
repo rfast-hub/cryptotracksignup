@@ -56,11 +56,11 @@ serve(async (req) => {
       httpClient: Stripe.createFetchHttpClient()
     });
 
-    // Create Stripe checkout session
+    // Create Stripe checkout session with the new price ID
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
       line_items: [{
-        price: 'price_1OtKKhHYxXOHKKsLvxabGXq4',
+        price: 'price_1QTsN0E4gc3VY6FiyEmpK5eh',
         quantity: 1,
       }],
       mode: 'subscription',
