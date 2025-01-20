@@ -19,19 +19,15 @@ const SignupPage = () => {
     setLoading(true);
 
     try {
-      // Create checkout session
-      const response = await fetch("/api/stripe/create-checkout", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email, password }),
+      // Create checkout session using Supabase Edge Function
+      const { data, error } = await supabase.functions.invoke('create-checkout', {
+        body: { email, password }
       });
 
-      const { url } = await response.json();
+      if (error) throw error;
 
-      if (url) {
-        window.location.href = url;
+      if (data?.url) {
+        window.location.href = data.url;
       } else {
         throw new Error("Failed to create checkout session");
       }
