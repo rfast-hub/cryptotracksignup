@@ -19,12 +19,21 @@ const SignupPage = () => {
     setLoading(true);
 
     try {
-      // Create checkout session using Supabase Edge Function
       const { data, error } = await supabase.functions.invoke('create-checkout', {
         body: { email, password }
       });
 
-      if (error) throw error;
+      if (error) {
+        if (error.message.includes("already been registered")) {
+          toast({
+            variant: "destructive",
+            title: "Account exists",
+            description: "An account with this email already exists. Proceeding to checkout.",
+          });
+        } else {
+          throw error;
+        }
+      }
 
       if (data?.url) {
         window.location.href = data.url;

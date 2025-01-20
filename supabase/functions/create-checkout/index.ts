@@ -27,17 +27,34 @@ serve(async (req) => {
       }
     );
 
-    // Create user with subscription_status metadata
-    const { data: userData, error: userError } = await supabaseAdmin.auth.admin.createUser({
-      email,
-      password,
-      email_confirm: true,
-      user_metadata: {
-        subscription_status: 'pending'
-      }
-    });
+    // Check if user exists
+    const { data: existingUser } = await supabaseAdmin.auth.admin.listUsers();
+    const userExists = existingUser.users.some(user => user.email === email);
 
-    if (userError) throw userError;
+    let userId;
+    
+    if (userExists) {
+      // Get existing user's ID
+      const user = existingUser.users.find(user => user.email === email);
+      userId = user?.id;
+    } else {
+      // Create new user
+      const { data: userData, error: userError } = await supabaseAdmin.auth.admin.createUser({
+        email,
+        password,
+        email_confirm: true,
+        user_metadata: {
+          subscription_status: 'pending'
+        }
+      });
+
+      if (userError) throw userError;
+      userId = userData.user.id;
+    }
+
+    if (!userId) {
+      throw new Error("Failed to get user ID");
+    }
 
     const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') || '', {
       apiVersion: '2023-10-16',
@@ -56,7 +73,7 @@ serve(async (req) => {
       cancel_url: `${req.headers.get('origin')}/signup`,
       customer_email: email,
       metadata: {
-        user_id: userData.user.id
+        user_id: userId
       }
     });
 
