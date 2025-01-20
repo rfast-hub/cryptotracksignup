@@ -19,12 +19,23 @@ const SignupPage = () => {
     setLoading(true);
 
     try {
-      // Create checkout session using Supabase Edge Function
       const { data, error } = await supabase.functions.invoke('create-checkout', {
         body: { email, password }
       });
 
-      if (error) throw error;
+      if (error) {
+        // Check if it's a user exists error
+        const errorBody = JSON.parse(error.message);
+        if (errorBody.code === "user_exists") {
+          toast({
+            variant: "destructive",
+            title: "Account already exists",
+            description: "Please try signing in instead, or use a different email address.",
+          });
+          return;
+        }
+        throw error;
+      }
 
       if (data?.url) {
         // Show success message about confirmation email

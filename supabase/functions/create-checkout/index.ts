@@ -27,6 +27,27 @@ serve(async (req) => {
       }
     );
 
+    // First, check if user exists
+    const { data: existingUser } = await supabaseAdmin.auth.admin.listUsers({
+      filters: {
+        email: email
+      }
+    });
+
+    if (existingUser?.users?.length > 0) {
+      console.log('User already exists:', email);
+      return new Response(
+        JSON.stringify({ 
+          error: "A user with this email address has already been registered",
+          code: "user_exists"
+        }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 400 // Using 400 instead of 500 as this is a client error
+        }
+      );
+    }
+
     // Create user with subscription_status metadata
     const { data: userData, error: userError } = await supabaseAdmin.auth.admin.createUser({
       email,
