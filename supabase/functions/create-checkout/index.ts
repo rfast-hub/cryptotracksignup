@@ -33,11 +33,11 @@ serve(async (req) => {
       const user = existingUser.users.find(user => user.email === email);
       userId = user?.id;
     } else {
-      // Create new user with email confirmation enabled
+      // Create new user with email confirmation required
       const { data: userData, error: userError } = await supabaseAdmin.auth.admin.createUser({
         email,
         password,
-        email_confirm: false, // Set to false to enable email confirmation
+        email_confirm: false, // This ensures email confirmation is required
         user_metadata: {
           subscription_status: 'pending'
         }
@@ -56,7 +56,7 @@ serve(async (req) => {
       httpClient: Stripe.createFetchHttpClient()
     });
 
-    // Create Stripe checkout session with the new price ID
+    // Create Stripe checkout session
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
       line_items: [{
