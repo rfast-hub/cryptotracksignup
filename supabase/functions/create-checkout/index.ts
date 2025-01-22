@@ -33,11 +33,11 @@ serve(async (req) => {
       const user = existingUser.users.find(user => user.email === email);
       userId = user?.id;
     } else {
-      // Create new user with email confirmation required
+      // Create new user with email confirmation enabled
       const { data: userData, error: userError } = await supabaseAdmin.auth.admin.createUser({
         email,
         password,
-        email_confirm: false, // This ensures email confirmation is required
+        email_confirm: true, // Set to true to require email confirmation
         user_metadata: {
           subscription_status: 'pending'
         }
