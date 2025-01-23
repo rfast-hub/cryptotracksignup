@@ -37,7 +37,7 @@ serve(async (req) => {
       const { data: userData, error: userError } = await supabaseAdmin.auth.admin.createUser({
         email,
         password,
-        email_confirm: true, // Set to true to require email confirmation
+        email_confirm: true,
         user_metadata: {
           subscription_status: 'pending'
         }
@@ -56,36 +56,63 @@ serve(async (req) => {
       httpClient: Stripe.createFetchHttpClient()
     });
 
-    // Create Stripe checkout session with the live Price ID
+    const customers = await stripe.customers.list({
+      email: email,
+      limit: 1
+    })
+
+    const price_id = "price_1QkCmhE4gc3VY6FiNxzBILTt"
+
+    let customer_id = undefined
+    if (customers.data.length > 0) {
+      customer_id = customers.data[0].id
+      // check if already subscribed to this price
+      const subscriptions = await stripe.subscriptions.list({
+        customer: customers.data[0].id,
+        status: 'active',
+        price: price_id,
+        limit: 1
+      })
+
+      if (subscriptions.data.length > 0) {
+        throw new Error("Customer already is subscribed for this")
+      }
+    }
+
+    console.log('Creating payment session with 7-day trial...')
     const session = await stripe.checkout.sessions.create({
-      payment_method_types: ['card'],
-      line_items: [{
-        price: 'price_1QkCmhE4gc3VY6FiNxzBILTt',
-        quantity: 1,
-      }],
+      customer: customer_id,
+      customer_email: customer_id ? undefined : email,
+      line_items: [
+        {
+          price: price_id,
+          quantity: 1,
+        },
+      ],
       mode: 'subscription',
+      subscription_data: {
+        trial_period_days: 7
+      },
       success_url: `${req.headers.get('origin')}/confirmation`,
       cancel_url: `${req.headers.get('origin')}/signup`,
-      customer_email: email,
-      metadata: {
-        user_id: userId
-      }
-    });
+    })
 
+    console.log('Payment session created:', session.id)
     return new Response(
       JSON.stringify({ url: session.url }),
-      {
+      { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200,
-      },
+      }
     )
   } catch (error) {
+    console.error('Error:', error)
     return new Response(
       JSON.stringify({ error: error.message }),
-      {
+      { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 500,
-      },
+      }
     )
   }
 })
