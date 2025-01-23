@@ -31,41 +31,18 @@ const SignupPage = () => {
     setLoading(true);
 
     try {
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          emailRedirectTo: `${window.location.origin}/confirmation`,
-        },
+      const { data, error } = await supabase.functions.invoke('create-checkout', {
+        body: { email, password }
       });
 
-      if (authError) {
-        if (authError.message.includes("already been registered")) {
-          toast({
-            variant: "destructive",
-            title: "Account exists",
-            description: "An account with this email already exists. Please log in instead.",
-          });
-        } else {
-          throw authError;
-        }
-        return;
+      if (error) {
+        throw error;
       }
 
-      if (authData.user) {
-        const { data, error } = await supabase.functions.invoke('create-checkout', {
-          body: { email, password }
-        });
-
-        if (error) {
-          throw error;
-        }
-
-        if (data?.url) {
-          window.location.href = data.url;
-        } else {
-          navigate('/confirmation');
-        }
+      if (data?.url) {
+        window.location.href = data.url;
+      } else {
+        throw new Error('No checkout URL received');
       }
     } catch (error) {
       console.error("Error:", error);
