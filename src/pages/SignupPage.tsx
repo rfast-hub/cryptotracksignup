@@ -4,30 +4,18 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
 const SignupPage = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!acceptedTerms) {
-      toast({
-        variant: "destructive",
-        title: "Terms Required",
-        description: "You must accept the terms and conditions to continue.",
-      });
-      return;
-    }
-
     setLoading(true);
 
     try {
@@ -116,27 +104,6 @@ const SignupPage = () => {
                 onChange={(e) => setPassword(e.target.value)}
                 className="mt-1"
               />
-            </div>
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="terms"
-                checked={acceptedTerms}
-                onCheckedChange={(checked) => setAcceptedTerms(checked as boolean)}
-              />
-              <Label
-                htmlFor="terms"
-                className="text-sm text-gray-600 cursor-pointer"
-              >
-                I accept the{" "}
-                <a
-                  href="/terms"
-                  className="text-primary hover:underline"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  terms and conditions
-                </a>
-              </Label>
             </div>
           </div>
 
