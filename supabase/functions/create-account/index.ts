@@ -23,7 +23,7 @@ serve(async (req) => {
 
     console.log('Creating new user with email:', email)
 
-    // Create new user with email confirmation disabled to trigger Supabase's email verification
+    // Create new user with email confirmation disabled
     const { data: userData, error: userError } = await supabaseAdmin.auth.admin.createUser({
       email,
       password,
@@ -46,7 +46,7 @@ serve(async (req) => {
 
     console.log('User created successfully:', userData)
 
-    // Send email confirmation link
+    // Generate and send confirmation email
     const { error: confirmError } = await supabaseAdmin.auth.admin.generateLink({
       type: 'signup',
       email: email,
@@ -62,6 +62,8 @@ serve(async (req) => {
         }
       )
     }
+
+    console.log('Confirmation email sent successfully')
 
     return new Response(
       JSON.stringify({ success: true, user: userData }),
