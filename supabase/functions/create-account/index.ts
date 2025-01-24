@@ -21,11 +21,11 @@ serve(async (req) => {
 
     const { email, password } = await req.json()
 
-    // Create new user with email confirmation enabled
+    // Create new user with email confirmation enabled (email_confirm: false)
     const { data: userData, error: userError } = await supabaseAdmin.auth.admin.createUser({
       email,
       password,
-      email_confirm: true,
+      email_confirm: false,
       user_metadata: {
         subscription_status: 'trialing'
       }
