@@ -31,25 +31,32 @@ const SignupPage = () => {
     setLoading(true);
 
     try {
-      const { data, error } = await supabase.functions.invoke('create-checkout', {
-        body: { email, password }
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: 'https://app.cryptotrack.org/confirmation',
+          data: {
+            subscription_status: 'trialing'
+          }
+        }
       });
 
-      if (error) {
-        throw error;
-      }
+      if (error) throw error;
 
-      if (data?.url) {
-        window.location.href = data.url;
-      } else {
-        throw new Error('No checkout URL received');
-      }
+      toast({
+        title: "Check your email",
+        description: "We've sent you a confirmation email. Please check your inbox.",
+      });
+
+      // Optionally redirect to a confirmation pending page
+      navigate("/confirmation-pending");
     } catch (error) {
       console.error("Error:", error);
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to process signup. Please try again.",
+        description: error.message || "Failed to process signup. Please try again.",
       });
     } finally {
       setLoading(false);
