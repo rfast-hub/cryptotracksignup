@@ -23,11 +23,11 @@ serve(async (req) => {
 
     console.log('Creating new user with email:', email)
 
-    // Create new user with email confirmation required
+    // Create new user with email confirmation enabled
     const { data: userData, error: userError } = await supabaseAdmin.auth.admin.createUser({
       email,
       password,
-      email_confirm: false, // This ensures a confirmation email is sent
+      email_confirm: true, // Changed to true to skip initial confirmation
       user_metadata: {
         subscription_status: 'trialing'
       }
@@ -45,6 +45,23 @@ serve(async (req) => {
     }
 
     console.log('User created successfully:', userData)
+
+    // Send confirmation email
+    const { error: emailError } = await supabaseAdmin.auth.admin.generateLink({
+      type: 'signup',
+      email,
+    })
+
+    if (emailError) {
+      console.error('Error sending confirmation email:', emailError)
+      return new Response(
+        JSON.stringify({ error: 'Failed to send confirmation email' }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 500,
+        }
+      )
+    }
 
     // Return success response
     return new Response(
