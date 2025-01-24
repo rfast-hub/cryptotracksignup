@@ -27,7 +27,7 @@ serve(async (req) => {
     const { data: userData, error: userError } = await supabaseAdmin.auth.admin.createUser({
       email,
       password,
-      email_confirm: false, // This ensures a confirmation email is required
+      email_confirm: false,
       user_metadata: {
         subscription_status: 'trialing'
       }
@@ -45,26 +45,6 @@ serve(async (req) => {
     }
 
     console.log('User created successfully:', userData)
-
-    // Generate and send confirmation email
-    const { error: emailError } = await supabaseAdmin.auth.admin.generateLink({
-      type: 'signup',
-      email,
-      options: {
-        redirectTo: 'https://app.cryptotrack.org/confirmation'
-      }
-    })
-
-    if (emailError) {
-      console.error('Error sending confirmation email:', emailError)
-      return new Response(
-        JSON.stringify({ error: 'Failed to send confirmation email' }),
-        { 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 500,
-        }
-      )
-    }
 
     // Return success response
     return new Response(
