@@ -46,32 +46,6 @@ serve(async (req) => {
 
     console.log('User created successfully:', userData)
 
-    // Generate and send confirmation email
-    const { data: linkData, error: confirmError } = await supabaseAdmin.auth.admin.generateLink({
-      type: 'signup',
-      email: email,
-      options: {
-        redirectTo: `${Deno.env.get('SITE_URL')}/confirmation`,
-      }
-    });
-
-    if (confirmError) {
-      console.error('Error generating confirmation link:', confirmError)
-      return new Response(
-        JSON.stringify({ error: confirmError.message }),
-        { 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 400,
-        }
-      )
-    }
-
-    console.log('Confirmation link generated:', linkData)
-    console.log('Confirmation email should be sent to:', email)
-    
-    // Add a delay to ensure the email is processed
-    await new Promise(resolve => setTimeout(resolve, 2000));
-
     // Return success response
     return new Response(
       JSON.stringify({ 
