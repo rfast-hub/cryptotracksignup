@@ -46,15 +46,19 @@ serve(async (req) => {
 
     console.log('User created successfully:', userData)
 
-    // Send email confirmation directly
-    const { data: emailData, error: emailError } = await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
-      redirectTo: `${Deno.env.get('SITE_URL')}/confirmation`,
+    // Generate and send confirmation email
+    const { data: linkData, error: confirmError } = await supabaseAdmin.auth.admin.generateLink({
+      type: 'signup',
+      email: email,
+      options: {
+        redirectTo: `${Deno.env.get('SITE_URL')}/confirmation`,
+      }
     });
 
-    if (emailError) {
-      console.error('Error sending confirmation email:', emailError)
+    if (confirmError) {
+      console.error('Error generating confirmation link:', confirmError)
       return new Response(
-        JSON.stringify({ error: emailError.message }),
+        JSON.stringify({ error: confirmError.message }),
         { 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           status: 400,
@@ -62,7 +66,8 @@ serve(async (req) => {
       )
     }
 
-    console.log('Email confirmation request sent:', emailData)
+    console.log('Confirmation link generated:', linkData)
+    console.log('Confirmation email should be sent to:', email)
     
     // Add a delay to ensure the email is processed
     await new Promise(resolve => setTimeout(resolve, 2000));
