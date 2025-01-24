@@ -31,7 +31,8 @@ const SignupPage = () => {
     setLoading(true);
 
     try {
-      const { data, error } = await supabase.auth.signUp({
+      // First create the user account with email confirmation
+      const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -42,14 +43,26 @@ const SignupPage = () => {
         }
       });
 
-      if (error) throw error;
+      if (authError) throw authError;
 
-      toast({
-        title: "Check your email",
-        description: "We've sent you a confirmation link to complete your registration.",
+      // Then create checkout session
+      const { data: checkoutData, error: checkoutError } = await supabase.functions.invoke('create-checkout', {
+        body: { email, password }
       });
-      
-      navigate("/confirmation");
+
+      if (checkoutError) throw checkoutError;
+
+      if (checkoutData?.url) {
+        toast({
+          title: "Check your email",
+          description: "We've sent you a confirmation link. You'll be redirected to complete your payment.",
+        });
+        
+        // Redirect to Stripe checkout
+        window.location.href = checkoutData.url;
+      } else {
+        throw new Error('No checkout URL received');
+      }
     } catch (error) {
       console.error("Error:", error);
       toast({
