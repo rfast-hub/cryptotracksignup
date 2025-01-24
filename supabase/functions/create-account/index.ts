@@ -27,7 +27,7 @@ serve(async (req) => {
     const { data: userData, error: userError } = await supabaseAdmin.auth.admin.createUser({
       email,
       password,
-      email_confirm: false,
+      email_confirm: false, // This ensures a confirmation email is sent
       user_metadata: {
         subscription_status: 'trialing'
       }
