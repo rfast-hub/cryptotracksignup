@@ -23,7 +23,7 @@ serve(async (req) => {
 
     console.log('Creating new user with email:', email)
 
-    // Create new user with email confirmation enabled
+    // Create new user with email confirmation required
     const { data: userData, error: userError } = await supabaseAdmin.auth.admin.createUser({
       email,
       password,
@@ -46,19 +46,15 @@ serve(async (req) => {
 
     console.log('User created successfully:', userData)
 
-    // Generate confirmation link with proper await
-    const { data: linkData, error: confirmError } = await supabaseAdmin.auth.admin.generateLink({
-      type: 'signup',
-      email: email,
-      options: {
-        redirectTo: `${Deno.env.get('SITE_URL')}/confirmation`
-      }
-    })
+    // Send email confirmation directly
+    const { data: emailData, error: emailError } = await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
+      redirectTo: `${Deno.env.get('SITE_URL')}/confirmation`,
+    });
 
-    if (confirmError) {
-      console.error('Error generating confirmation link:', confirmError)
+    if (emailError) {
+      console.error('Error sending confirmation email:', emailError)
       return new Response(
-        JSON.stringify({ error: confirmError.message }),
+        JSON.stringify({ error: emailError.message }),
         { 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           status: 400,
@@ -66,15 +62,18 @@ serve(async (req) => {
       )
     }
 
-    // Wait for a moment to ensure email processing begins
-    await new Promise(resolve => setTimeout(resolve, 1000));
-
-    console.log('Confirmation link generated:', linkData)
-    console.log('Confirmation email should be sent to:', email)
+    console.log('Email confirmation request sent:', emailData)
+    
+    // Add a delay to ensure the email is processed
+    await new Promise(resolve => setTimeout(resolve, 2000));
 
     // Return success response
     return new Response(
-      JSON.stringify({ success: true, user: userData }),
+      JSON.stringify({ 
+        success: true, 
+        user: userData,
+        message: 'User created and confirmation email sent'
+      }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200,
