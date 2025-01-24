@@ -21,6 +21,8 @@ serve(async (req) => {
 
     const { email, password } = await req.json()
 
+    console.log('Creating new user with email:', email)
+
     // Create new user with email confirmation enabled (email_confirm: false)
     const { data: userData, error: userError } = await supabaseAdmin.auth.admin.createUser({
       email,
@@ -31,10 +33,21 @@ serve(async (req) => {
       }
     });
 
-    if (userError) throw userError;
+    if (userError) {
+      console.error('Error creating user:', userError)
+      return new Response(
+        JSON.stringify({ error: userError.message }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 400,
+        }
+      )
+    }
+
+    console.log('User created successfully:', userData)
 
     return new Response(
-      JSON.stringify({ success: true }),
+      JSON.stringify({ success: true, user: userData }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200,
