@@ -23,7 +23,7 @@ serve(async (req) => {
 
     console.log('Creating new user with email:', email)
 
-    // Create new user with email confirmation enabled (email_confirm: false)
+    // Create new user with email confirmation disabled to trigger Supabase's email verification
     const { data: userData, error: userError } = await supabaseAdmin.auth.admin.createUser({
       email,
       password,
@@ -45,6 +45,23 @@ serve(async (req) => {
     }
 
     console.log('User created successfully:', userData)
+
+    // Send email confirmation link
+    const { error: confirmError } = await supabaseAdmin.auth.admin.generateLink({
+      type: 'signup',
+      email: email,
+    })
+
+    if (confirmError) {
+      console.error('Error generating confirmation link:', confirmError)
+      return new Response(
+        JSON.stringify({ error: confirmError.message }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 400,
+        }
+      )
+    }
 
     return new Response(
       JSON.stringify({ success: true, user: userData }),
