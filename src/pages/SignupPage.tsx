@@ -31,21 +31,7 @@ const SignupPage = () => {
     setLoading(true);
 
     try {
-      // First create the user account with email confirmation
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          emailRedirectTo: `${window.location.origin}/confirmation`,
-          data: {
-            subscription_status: 'trialing'
-          }
-        }
-      });
-
-      if (authError) throw authError;
-
-      // Then create checkout session
+      // First create checkout session
       const { data: checkoutData, error: checkoutError } = await supabase.functions.invoke('create-checkout', {
         body: { email, password }
       });
@@ -54,8 +40,8 @@ const SignupPage = () => {
 
       if (checkoutData?.url) {
         toast({
-          title: "Check your email",
-          description: "We've sent you a confirmation link. You'll be redirected to complete your payment.",
+          title: "Redirecting to payment",
+          description: "You'll be redirected to complete your payment. After successful payment, you'll receive a confirmation email.",
         });
         
         // Redirect to Stripe checkout
@@ -139,7 +125,7 @@ const SignupPage = () => {
             className="w-full"
             disabled={loading}
           >
-            {loading ? "Processing..." : "Sign up"}
+            {loading ? "Processing..." : "Continue to payment"}
           </Button>
         </form>
       </Card>
