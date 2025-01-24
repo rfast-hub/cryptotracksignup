@@ -23,7 +23,7 @@ serve(async (req) => {
 
     console.log('Creating new user with email:', email)
 
-    // Create new user with email confirmation disabled
+    // Create new user with email confirmation enabled
     const { data: userData, error: userError } = await supabaseAdmin.auth.admin.createUser({
       email,
       password,
@@ -46,10 +46,13 @@ serve(async (req) => {
 
     console.log('User created successfully:', userData)
 
-    // Generate and send confirmation email
-    const { error: confirmError } = await supabaseAdmin.auth.admin.generateLink({
+    // Generate and send confirmation email with more detailed options
+    const { data: linkData, error: confirmError } = await supabaseAdmin.auth.admin.generateLink({
       type: 'signup',
       email: email,
+      options: {
+        redirectTo: `${Deno.env.get('SITE_URL')}/confirmation`
+      }
     })
 
     if (confirmError) {
@@ -63,7 +66,8 @@ serve(async (req) => {
       )
     }
 
-    console.log('Confirmation email sent successfully')
+    console.log('Confirmation link generated:', linkData)
+    console.log('Confirmation email should be sent to:', email)
 
     return new Response(
       JSON.stringify({ success: true, user: userData }),
