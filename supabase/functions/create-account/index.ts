@@ -46,7 +46,7 @@ serve(async (req) => {
 
     console.log('User created successfully:', userData)
 
-    // Generate and send confirmation email with more detailed options
+    // Generate confirmation link with proper await
     const { data: linkData, error: confirmError } = await supabaseAdmin.auth.admin.generateLink({
       type: 'signup',
       email: email,
@@ -66,9 +66,13 @@ serve(async (req) => {
       )
     }
 
+    // Wait for a moment to ensure email processing begins
+    await new Promise(resolve => setTimeout(resolve, 1000));
+
     console.log('Confirmation link generated:', linkData)
     console.log('Confirmation email should be sent to:', email)
 
+    // Return success response
     return new Response(
       JSON.stringify({ success: true, user: userData }),
       { 
