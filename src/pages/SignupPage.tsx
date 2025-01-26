@@ -110,7 +110,7 @@ const SignupPage = () => {
               >
                 I accept the{" "}
                 <a
-                  href="/terms"
+                  href="https://landing.cryptotrack.org/terms"
                   className="text-primary hover:underline"
                   target="_blank"
                   rel="noopener noreferrer"
@@ -121,8 +121,6 @@ const SignupPage = () => {
                 <a
                   href="/privacy"
                   className="text-primary hover:underline"
-                  target="_blank"
-                  rel="noopener noreferrer"
                 >
                   privacy policy
                 </a>
