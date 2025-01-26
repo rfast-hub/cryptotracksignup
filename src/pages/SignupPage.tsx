@@ -97,11 +97,12 @@ const SignupPage = () => {
                 className="mt-1"
               />
             </div>
-            <div className="flex items-center space-x-2">
+            <div className="flex items-start space-x-2">
               <Checkbox
                 id="terms"
                 checked={acceptedTerms}
                 onCheckedChange={(checked) => setAcceptedTerms(checked as boolean)}
+                className="mt-1"
               />
               <Label
                 htmlFor="terms"
@@ -115,6 +116,15 @@ const SignupPage = () => {
                   rel="noopener noreferrer"
                 >
                   terms and conditions
+                </a>
+                {" "}and{" "}
+                <a
+                  href="/privacy"
+                  className="text-primary hover:underline"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  privacy policy
                 </a>
               </Label>
             </div>
