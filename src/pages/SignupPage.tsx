@@ -119,7 +119,7 @@ const SignupPage = () => {
                 </a>
                 {" "}and{" "}
                 <a
-                  href="/privacy"
+                  href="https://landing.cryptotrack.org/privacy"
                   className="text-primary hover:underline"
                   target="_blank"
                   rel="noopener noreferrer"
