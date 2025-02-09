@@ -13,10 +13,24 @@ const ConfirmationPage = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const createAccount = async () => {
-      const email = searchParams.get("email");
-      const password = searchParams.get("password");
+    // Clear sensitive data from URL after reading
+    const email = searchParams.get("email");
+    const password = searchParams.get("password");
+    
+    // Remove sensitive parameters from URL
+    if (email || password) {
+      const cleanParams = new URLSearchParams();
+      searchParams.forEach((value, key) => {
+        if (key !== 'email' && key !== 'password') {
+          cleanParams.append(key, value);
+        }
+      });
+      window.history.replaceState({}, '', 
+        `${window.location.pathname}${cleanParams.toString() ? '?' + cleanParams.toString() : ''}`
+      );
+    }
 
+    const createAccount = async () => {
       if (!email || !password) {
         toast({
           variant: "destructive",
@@ -46,11 +60,11 @@ const ConfirmationPage = () => {
           description: "We've sent you a confirmation link to complete your registration.",
         });
       } catch (error) {
-        console.error("Error:", error);
+        console.error("Error creating account");  // Don't expose error details in production
         toast({
           variant: "destructive",
           title: "Error",
-          description: error.message || "Failed to create account. Please try again.",
+          description: "Failed to create account. Please try again.",
         });
         navigate("/signup");
       } finally {
@@ -62,7 +76,9 @@ const ConfirmationPage = () => {
   }, [searchParams, navigate, toast]);
 
   const handleContinue = () => {
-    window.location.href = "https://app.cryptotrack.org";
+    // Sanitize the URL before redirecting
+    const targetUrl = new URL("https://app.cryptotrack.org");
+    window.location.href = targetUrl.toString();
   };
 
   return (
