@@ -67,7 +67,12 @@ serve(async (req) => {
     const price_id = "price_1QkCmhE4gc3VY6FiNxzBILTt"
 
     // Get the full URL of the site with fallback
-    const origin = req.headers.get('origin') || 'https://cryptotracksignup.netlify.app'
+    const origin = req.headers.get('origin')
+    console.log('Received origin:', origin)
+
+    // For development and testing, if no origin is present, use a default
+    const effectiveOrigin = origin || 'https://cryptotracksignup.netlify.app'
+    console.log('Effective origin:', effectiveOrigin)
     
     // Allow any subdomain of cryptotrack.org and Netlify preview URLs
     const allowedOrigins = [
@@ -79,17 +84,17 @@ serve(async (req) => {
     ]
 
     // Check if origin matches any allowed patterns
-    const isAllowedOrigin = allowedOrigins.some(allowed => {
+    const isAllowedOrigin = !origin || allowedOrigins.some(allowed => {
       if (allowed.startsWith('.')) {
         // For domain patterns like .cryptotrack.org
-        return origin.endsWith(allowed)
+        return effectiveOrigin.endsWith(allowed)
       }
-      return origin === allowed
+      return effectiveOrigin === allowed
     })
 
     if (!isAllowedOrigin) {
-      console.error('Invalid origin:', origin)
-      throw new Error('Invalid origin')
+      console.error('Invalid origin:', effectiveOrigin)
+      throw new Error(`Invalid origin: ${effectiveOrigin}`)
     }
 
     console.log('Creating payment session...')
@@ -105,8 +110,8 @@ serve(async (req) => {
       subscription_data: {
         trial_period_days: 7
       },
-      success_url: `${origin}/confirmation?email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`,
-      cancel_url: `${origin}/signup`,
+      success_url: `${effectiveOrigin}/confirmation?email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`,
+      cancel_url: `${effectiveOrigin}/signup`,
       metadata: {
         email,
         password: '[REDACTED]', // Don't log actual password in metadata
