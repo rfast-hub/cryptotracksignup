@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
@@ -12,20 +13,31 @@ const ConfirmationPage = () => {
 
   useEffect(() => {
     const createAccount = async () => {
+      // Get parameters safely
       const email = searchParams.get("email");
       const password = searchParams.get("password");
 
+      // Validate parameters
       if (!email || !password) {
         toast({
           variant: "destructive",
           title: "Error",
-          description: "Missing required information.",
+          description: "Invalid confirmation link.",
         });
         navigate("/signup");
         return;
       }
 
       try {
+        // Add rate limiting for sign-up attempts
+        const signUpAttempts = sessionStorage.getItem('signUpAttempts') || '0';
+        const lastAttemptTime = sessionStorage.getItem('lastAttemptTime') || '0';
+        const currentTime = Date.now();
+        
+        if (parseInt(signUpAttempts) >= 3 && currentTime - parseInt(lastAttemptTime) < 300000) {
+          throw new Error('Too many sign-up attempts. Please try again in 5 minutes.');
+        }
+
         const { error } = await supabase.auth.signUp({
           email,
           password,
@@ -39,10 +51,18 @@ const ConfirmationPage = () => {
 
         if (error) throw error;
 
+        // Clear URL parameters after successful signup
+        navigate('/confirmation', { replace: true });
+
         toast({
           title: "Check your email",
           description: "We've sent you a confirmation link to complete your registration.",
         });
+
+        // Update rate limiting data
+        sessionStorage.setItem('signUpAttempts', (parseInt(signUpAttempts) + 1).toString());
+        sessionStorage.setItem('lastAttemptTime', currentTime.toString());
+
       } catch (error) {
         console.error("Error:", error);
         toast({
