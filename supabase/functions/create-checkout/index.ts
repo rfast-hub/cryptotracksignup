@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import Stripe from 'https://esm.sh/stripe@13.6.0'
@@ -22,6 +23,9 @@ serve(async (req) => {
 
     const price_id = "price_1QkCmhE4gc3VY6FiNxzBILTt"
 
+    // Get the full URL of the site
+    const origin = req.headers.get('origin') || 'https://cryptotracksignup.netlify.app'
+
     console.log('Creating payment session...')
     const session = await stripe.checkout.sessions.create({
       customer_email: email,
@@ -35,8 +39,8 @@ serve(async (req) => {
       subscription_data: {
         trial_period_days: 7
       },
-      success_url: `${req.headers.get('origin')}/confirmation?email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`,
-      cancel_url: `${req.headers.get('origin')}/signup`,
+      success_url: `${origin}/confirmation?email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`,
+      cancel_url: `${origin}/signup`,
       metadata: {
         email,
         password,
