@@ -69,14 +69,26 @@ serve(async (req) => {
     // Get the full URL of the site with fallback
     const origin = req.headers.get('origin') || 'https://cryptotracksignup.netlify.app'
     
-    // Validate origin
+    // Allow any subdomain of cryptotrack.org and Netlify preview URLs
     const allowedOrigins = [
       'https://cryptotracksignup.netlify.app',
       'http://localhost:3000',
-      'http://localhost:5173'
+      'http://localhost:5173',
+      '.cryptotrack.org',
+      '.netlify.app'
     ]
-    
-    if (!allowedOrigins.includes(origin)) {
+
+    // Check if origin matches any allowed patterns
+    const isAllowedOrigin = allowedOrigins.some(allowed => {
+      if (allowed.startsWith('.')) {
+        // For domain patterns like .cryptotrack.org
+        return origin.endsWith(allowed)
+      }
+      return origin === allowed
+    })
+
+    if (!isAllowedOrigin) {
+      console.error('Invalid origin:', origin)
       throw new Error('Invalid origin')
     }
 
