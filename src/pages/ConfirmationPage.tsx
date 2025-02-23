@@ -60,11 +60,11 @@ const ConfirmationPage = () => {
           description: "We've sent you a confirmation link to complete your registration.",
         });
       } catch (error) {
-        console.error("Error creating account");  // Don't expose error details in production
+        console.error("Error creating account:", error);  // Keep error details for debugging
         toast({
           variant: "destructive",
           title: "Error",
-          description: "Failed to create account. Please try again.",
+          description: error.message || "Failed to create account. Please try again.", // Show specific error message
         });
         navigate("/signup");
       } finally {
