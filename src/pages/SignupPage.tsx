@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -110,7 +111,7 @@ const SignupPage = () => {
               >
                 I accept the{" "}
                 <a
-                  href="https://landing.cryptotrack.org/terms"
+                  href="https://terms.cryptotrack.org"
                   className="text-primary hover:underline"
                   target="_blank"
                   rel="noopener noreferrer"
