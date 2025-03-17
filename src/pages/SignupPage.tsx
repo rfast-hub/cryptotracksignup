@@ -120,8 +120,10 @@ const SignupPage = () => {
                 </a>
                 {" "}and{" "}
                 <a
-                  href="/privacy"
+                  href="https://privacy.cryptotrack.org"
                   className="text-primary hover:underline"
+                  target="_blank"
+                  rel="noopener noreferrer"
                 >
                   privacy policy
                 </a>
